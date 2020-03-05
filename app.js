@@ -1,92 +1,68 @@
+//Required node packages 
 const fs = require('fs')
-var express = require("express");
-var path = require("path");
-// var index = require("/public/assets/js/index.js")
+const express = require("express");
+const path = require("path");
 
+//Output path
+const OUTPUT_DIR = path.resolve(__dirname, "db")
+const outputPath = path.join(OUTPUT_DIR, "db.json");
+
+//Id variable
 var x = 1
 
+//Setting the express package and port number 
+var app = express(); 
+var PORT = process.env.PORT || 3000; 
 
-// console.log(index)
-// // var dbJson = require("db/db.json")
-
-var app = express(); // runs an express server
-var PORT = 3000; // its port
-
-// notes array 
-var notes = [
-
-
-]
-
-//Middle wear
+ //Middle wear
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(__dirname + '/public'));
-
-
-
-
-
+const notes = require("./db/db.json")
 
 //Get routes
-app.get("/", function (req, res) {
-    res.sendFile(path.join(__dirname, "public/index.html"));
-});
 app.get("/notes", function (req, res) {
     res.sendFile(path.join(__dirname, "public/notes.html"));
 });
-
-
 
 app.get("/api/notes", function (req, res) {
     res.json(notes);;
 });
 
+app.get("*", function (req, res) {
+    res.sendFile(path.join(__dirname, "public/index.html"));
+});
 
 // Post routes
 app.post("/api/notes", function (req, res) {
-
     let newNote = req.body;
-    console.log(newNote)
-
     newNote.routeName = newNote.title.replace(/\s+/g, "").toLowerCase();
     newNote.id = x++
-
-    console.log(newNote);
-
     notes.push(newNote);
-
+    fs.writeFile(outputPath, JSON.stringify(notes), function (err) {
+        if (err) {
+            throw err
+        }
+    })
     res.json(newNote);
 });
 
-
-
 //delete function 
 app.delete(`/api/notes/:id`, function (req, res) {
-
     var noteId = req.params.id;
-
     for (var i = 0; i < notes.length; i++) {
-        console.log(noteId)
-        console.log(notes[i].id)
-
         if (noteId == notes[i].id) {
-            console.log(noteId)
             notes.splice(i, 1);
-            console.log(notes)
+           
+            fs.writeFile(outputPath, JSON.stringify(notes), function (err) {
+                if (err) {
+                    throw err
+                } 
+            })
         }
     }
     res.json(notes)
 })
 
-
-// app.get("/", function (req, res) {
-//     res.json("home page");;
-// });
-
-
-
-// Listen 
-app.listen(PORT, function () {
-    console.log("App listening on PORT " + PORT);
-});
+// Listen function
+app.listen(PORT, function () {});
